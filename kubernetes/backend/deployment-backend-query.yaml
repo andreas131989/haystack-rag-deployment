@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: haystack-rag-backend-query
+  labels:
+    app.kubernetes.io/name: haystack-rag
+    app.kubernetes.io/instance: haystack-rag
+    app.kubernetes.io/component: query
+    app.kubernetes.io/group: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: haystack-rag
+      app.kubernetes.io/component: query
+      app.kubernetes.io/group: backend
+  template:
+    metadata:
+      labels:
+        app: haystack-rag
+        app.kubernetes.io/component: query
+        app.kubernetes.io/group: backend
+    spec:
+      initContainers:
+      - name: opensearch-init
+        image: busybox
+        command: ['sh', '-c', 'until nc -z haystack-rag-opensearch 9200; do echo "Waiting for OpenSearch..."; sleep 5; done']
+      containers:
+      - name: query
+        image: "backend-query:local"
+        imagePullPolicy: IfNotPresent
+        ports:
+          - name: query-api
+            containerPort: 8002
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: query-api
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 18
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: query-api
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 18
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "250m"
+            ephemeral-storage: "10Gi"
+          limits:
+            memory: "2Gi"
+            cpu: "500m"
+            ephemeral-storage: "20Gi"
+        env:
+          - name: OPENSEARCH_USER
+            valueFrom:
+              secretKeyRef:
+                name: haystack-rag-secrets
+                key: opensearch-user
+          - name: OPENSEARCH_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: haystack-rag-secrets
+                key: opensearch-password
+          - name: OPENAI_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: haystack-rag-secrets
+                key: openai-api-key
+        envFrom:
+          - configMapRef:
+              name: haystack-rag-backend-config

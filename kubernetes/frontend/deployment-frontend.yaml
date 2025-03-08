@@ -1,0 +1,93 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: haystack-rag-frontend-config
+  labels:
+    app.kubernetes.io/name: haystack-rag
+    app.kubernetes.io/instance: haystack-rag
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/group: frontend
+data:
+  nginx.conf: |
+    server {
+        listen 3000 default_server;
+        server_name _;
+
+        client_max_body_size 100M;
+
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
+            try_files $uri $uri/ /index.html;
+        }
+
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   /usr/share/nginx/html;
+        }
+    }
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: haystack-rag-frontend
+  labels:
+    app.kubernetes.io/name: haystack-rag
+    app.kubernetes.io/instance: haystack-rag
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/group: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: haystack-rag
+      app.kubernetes.io/component: frontend
+      app.kubernetes.io/group: frontend
+  template:
+    metadata:
+      labels:
+        app: haystack-rag
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/group: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: "frontend:local"
+        imagePullPolicy: IfNotPresent
+        ports:
+          - name: react-app
+            containerPort: 3000
+        volumeMounts:
+          - name: config
+            mountPath: /etc/nginx/conf.d/default.conf
+            subPath: nginx.conf
+            readOnly: true
+        readinessProbe:
+          httpGet:
+            path: /
+            port: react-app
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+        livenessProbe:
+          httpGet:
+            path: /
+            port: react-app
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+      volumes:
+        - name: config
+          configMap:
+            name: haystack-rag-frontend-config

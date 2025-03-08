@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: haystack-rag-frontend
+  labels:
+    app.kubernetes.io/name: haystack-rag
+    app.kubernetes.io/instance: haystack-rag
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/group: frontend
+spec:
+  type: ClusterIP
+  selector:
+    app: haystack-rag
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/group: frontend
+  ports:
+    - name: react-app
+      port: 3000
+      targetPort: 3000

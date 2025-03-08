@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: haystack-rag-indexing
+  labels:
+    app.kubernetes.io/name: haystack-rag
+    app.kubernetes.io/instance: haystack-rag
+    app.kubernetes.io/component: indexing
+    app.kubernetes.io/group: backend
+spec:
+  type: ClusterIP
+  selector:
+    app: haystack-rag
+    app.kubernetes.io/component: indexing
+    app.kubernetes.io/group: backend
+  ports:
+    - name: indexing-api
+      port: 8001
+      targetPort: 8001
