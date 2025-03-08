@@ -35,7 +35,7 @@ function FileList({ files, onFileInputChange, error }) {
             as="textarea"
             rows={10}
             readOnly
-            value={files.join('\n')}
+            value={Array.isArray(files) ? files.join('\n') : ''}
             role="filelist"
             style={{
               resize: 'none',

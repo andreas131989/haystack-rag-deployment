@@ -10,6 +10,6 @@ build-backend-query:
 	docker build -f src/backend/Dockerfile.query -t $(BACKEND_IMAGE_QUERY) ./src/backend/
 
 build-frontend:
-	docker build -f src/frontend/Dockerfile.frontend -t $(FRONTEND_IMAGE) ./src/frontend/
+	docker build -f src/frontend/Dockerfile.frontend --build-arg REACT_APP_HAYSTACK_API_URL=/api -t $(FRONTEND_IMAGE) ./src/frontend/
 
 build: build-backend-indexing build-backend-query build-frontend

@@ -19,25 +19,40 @@ data:
           service: service-api-files
           entryPoints:
             - web
+          middlewares:
+            - strip-api-files
         router-api-search:
           rule: "PathPrefix(`/api/search`)"
           service: service-api-search
           entryPoints:
             - web
+          middlewares:
+            - strip-api-search
         router-frontend:
           rule: "PathPrefix(`/`)"
           service: service-frontend
           entryPoints:
             - web
+
+      middlewares:
+        strip-api-files:
+          stripPrefix:
+            prefixes:
+              - "/api/files"
+        strip-api-search:
+          stripPrefix:
+            prefixes:
+              - "/api/search"
+
       services:
         service-api-files:
           loadBalancer:
             servers:
-              - url: "http://haystack-rag-backend-indexing:8001"
+              - url: "http://haystack-rag-indexing:8001"
         service-api-search:
           loadBalancer:
             servers:
-              - url: "http://haystack-rag-backend-query:8002"
+              - url: "http://haystack-rag-query:8002"
         service-frontend:
           loadBalancer:
             servers:
