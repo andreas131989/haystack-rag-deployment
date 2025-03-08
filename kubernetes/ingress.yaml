@@ -8,13 +8,13 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: "example.local"
+  - host: "rag.local"
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: haystack-rag-gateway-api-gw
+            name: haystack-rag-api-gw
             port:
               number: 8080

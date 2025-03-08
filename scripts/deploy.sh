@@ -12,7 +12,7 @@ if k3d cluster list | grep -q "$CLUSTER_NAME"; then
     log "Cluster '$CLUSTER_NAME' already exists. Skipping creation."
 else
     log "Creating k3d cluster '$CLUSTER_NAME'..."
-    k3d cluster create "$CLUSTER_NAME" --wait
+    k3d cluster create "$CLUSTER_NAME" --wait --port '32090:32090@server:0'
 fi
 
 # Write kubeconfig to persistent location
