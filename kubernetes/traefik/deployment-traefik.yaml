@@ -38,11 +38,11 @@ data:
         strip-api-files:
           stripPrefix:
             prefixes:
-              - "/api/files"
+              - "/api"
         strip-api-search:
           stripPrefix:
             prefixes:
-              - "/api/search"
+              - "/api"
 
       services:
         service-api-files:
