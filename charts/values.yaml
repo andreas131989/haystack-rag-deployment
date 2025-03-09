@@ -1,0 +1,217 @@
+apiGw:
+  ports:
+  - name: web
+    nodePort: 32090
+    port: 8080
+    targetPort: 8080
+  - name: traefik
+    nodePort: 32091
+    port: 8081
+    targetPort: 8081
+  type: NodePort
+backendConfig:
+  generator: openai
+  haystackLogLevel: INFO
+  indexOnStartup: "true"
+  logLevel: INFO
+  opensearchHost: https://haystack-rag-opensearch.default.svc.cluster.local:9200
+  pythonunbuffered: "1"
+  tokenizersParallelism: "false"
+  useOpenaiEmbedder: "false"
+backendIndexing:
+  indexing:
+    image:
+      repository: backend-indexing
+      tag: local
+    imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 500m
+        ephemeral-storage: 20Gi
+        memory: 2Gi
+      requests:
+        cpu: 250m
+        ephemeral-storage: 10Gi
+        memory: 1Gi
+  opensearchInit:
+    image:
+      repository: busybox
+      tag: latest
+  replicas: 1
+backendQuery:
+  opensearchInit:
+    image:
+      repository: busybox
+      tag: latest
+  query:
+    image:
+      repository: backend-query
+      tag: local
+    imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 500m
+        ephemeral-storage: 20Gi
+        memory: 2Gi
+      requests:
+        cpu: 250m
+        ephemeral-storage: 10Gi
+        memory: 1Gi
+  replicas: 1
+frontend:
+  frontend:
+    image:
+      repository: frontend
+      tag: local
+    imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 200m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+  ports:
+  - name: react-app
+    port: 3000
+    targetPort: 3000
+  replicas: 1
+  type: ClusterIP
+frontendConfig:
+  nginxConf: |-
+    server {
+        listen 3000 default_server;
+        server_name _;
+        client_max_body_size 100M;
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
+            try_files $uri $uri/ /index.html;
+        }
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   /usr/share/nginx/html;
+        }
+    }
+gatewayApiGw:
+  replicas: 1
+  traefik:
+    args:
+    - --providers.file.directory=/etc/traefik/conf.d
+    - --providers.file.watch=true
+    - --entrypoints.web.address=:8080
+    - --entrypoints.traefik.address=:8081
+    - --api.insecure=true
+    - --log.level=DEBUG
+    image:
+      repository: traefik
+      tag: v2.10
+    resources:
+      limits:
+        cpu: 200m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+gatewayApiGwConfig:
+  traefikYml: |-
+    log:
+      level: DEBUG
+    http:
+      routers:
+        router-api-files:
+          rule: "PathPrefix(`/api/files`)"
+          service: service-api-files
+          entryPoints:
+            - web
+          middlewares:
+            - strip-api-files
+        router-api-search:
+          rule: "PathPrefix(`/api/search`)"
+          service: service-api-search
+          entryPoints:
+            - web
+          middlewares:
+            - strip-api-search
+        router-frontend:
+          rule: "PathPrefix(`/`)"
+          service: service-frontend
+          entryPoints:
+            - web
+      middlewares:
+        strip-api-files:
+          stripPrefix:
+            prefixes:
+              - "/api"
+        strip-api-search:
+          stripPrefix:
+            prefixes:
+              - "/api"
+      services:
+        service-api-files:
+          loadBalancer:
+            servers:
+              - url: "http://haystack-rag-indexing:8001"
+        service-api-search:
+          loadBalancer:
+            servers:
+              - url: "http://haystack-rag-query:8002"
+        service-frontend:
+          loadBalancer:
+            servers:
+              - url: "http://haystack-rag-frontend:3000"
+indexing:
+  ports:
+  - name: indexing-api
+    port: 8001
+    targetPort: 8001
+  type: ClusterIP
+kubernetesClusterDomain: cluster.local
+opensearch:
+  ports:
+  - name: rest-api
+    port: 9200
+    targetPort: 9200
+  - name: performance
+    port: 9600
+    targetPort: 9600
+  type: ClusterIP
+pvc:
+  fileStorage:
+    storageClass: local-path
+    storageRequest: 30Gi
+query:
+  ports:
+  - name: query-api
+    port: 8002
+    targetPort: 8002
+  type: ClusterIP
+searchOpensearch:
+  opensearch:
+    env:
+      bootstrapMemoryLock: "false"
+      discoveryType: single-node
+      opensearchJavaOpts: -Xms512m -Xmx512m
+      opensearchSecurityEnabled: "true"
+    image:
+      repository: opensearchproject/opensearch
+      tag: 2.11.0
+    imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: "1"
+        ephemeral-storage: 4Gi
+        memory: 4Gi
+      requests:
+        cpu: 500m
+        ephemeral-storage: 2Gi
+        memory: 2Gi
+  replicas: 1
+  volumeClaims:
+    opensearchData:
+      requests:
+        storage: 30Gi
+secrets:
+  openaiApiKey: "ssj-test-project"
+  opensearchPassword: "admin"
+  opensearchUser: "admin"

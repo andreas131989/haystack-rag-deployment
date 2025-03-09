@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "charts.fullname" . }}-query
+  labels:
+    app.kubernetes.io/component: query
+    app.kubernetes.io/group: backend
+  {{- include "charts.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.query.type }}
+  selector:
+    app: haystack-rag
+    app.kubernetes.io/component: query
+    app.kubernetes.io/group: backend
+    {{- include "charts.selectorLabels" . | nindent 4 }}
+  ports:
+  {{- .Values.query.ports | toYaml | nindent 2 }}

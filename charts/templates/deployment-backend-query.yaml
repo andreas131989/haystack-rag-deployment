@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "charts.fullname" . }}-backend-query
+  labels:
+    app.kubernetes.io/component: query
+    app.kubernetes.io/group: backend
+  {{- include "charts.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.backendQuery.replicas }}
+  selector:
+    matchLabels:
+      app: haystack-rag
+      app.kubernetes.io/component: query
+      app.kubernetes.io/group: backend
+    {{- include "charts.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: haystack-rag
+        app.kubernetes.io/component: query
+        app.kubernetes.io/group: backend
+      {{- include "charts.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - env:
+        - name: OPENSEARCH_USER
+          valueFrom:
+            secretKeyRef:
+              key: opensearch-user
+              name: {{ include "charts.fullname" . }}-secrets
+        - name: OPENSEARCH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: opensearch-password
+              name: {{ include "charts.fullname" . }}-secrets
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: openai-api-key
+              name: {{ include "charts.fullname" . }}-secrets
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        envFrom:
+        - configMapRef:
+            name: {{ include "charts.fullname" . }}-backend-config
+        image: {{ .Values.backendQuery.query.image.repository }}:{{ .Values.backendQuery.query.image.tag
+          | default .Chart.AppVersion }}
+        imagePullPolicy: {{ .Values.backendQuery.query.imagePullPolicy }}
+        livenessProbe:
+          failureThreshold: 18
+          httpGet:
+            path: /health
+            port: query-api
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+        name: query
+        ports:
+        - containerPort: 8002
+          name: query-api
+        readinessProbe:
+          failureThreshold: 18
+          httpGet:
+            path: /health
+            port: query-api
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        resources: {{- toYaml .Values.backendQuery.query.resources | nindent 10 }}
+      initContainers:
+      - name: opensearch-init
+        resources: {}
+        command: ['sh', '-c', 'until nc -z -w 1 haystack-rag-opensearch.default.svc.cluster.local 9200; do echo "Waiting for OpenSearch..."; sleep 5; done']
+        env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        image: {{ .Values.backendQuery.opensearchInit.image.repository }}:{{ .Values.backendQuery.opensearchInit.image.tag
+          | default .Chart.AppVersion }}

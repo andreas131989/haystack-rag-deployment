@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "charts.fullname" . }}-gateway-api-gw-config
+  labels:
+    app.kubernetes.io/component: api-gw
+    app.kubernetes.io/group: gateway
+  {{- include "charts.labels" . | nindent 4 }}
+data:
+  traefik.yml: {{ .Values.gatewayApiGwConfig.traefikYml | toYaml | indent 1 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "charts.fullname" . }}-gateway-api-gw
+  labels:
+    app.kubernetes.io/component: api-gw
+    app.kubernetes.io/group: gateway
+  {{- include "charts.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.gatewayApiGw.replicas }}
+  selector:
+    matchLabels:
+      app: haystack-rag
+      app.kubernetes.io/component: api-gw
+      app.kubernetes.io/group: gateway
+    {{- include "charts.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: haystack-rag
+        app.kubernetes.io/component: api-gw
+        app.kubernetes.io/group: gateway
+      {{- include "charts.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - args: {{- toYaml .Values.gatewayApiGw.traefik.args | nindent 8 }}
+        env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        image: {{ .Values.gatewayApiGw.traefik.image.repository }}:{{ .Values.gatewayApiGw.traefik.image.tag
+          | default .Chart.AppVersion }}
+        name: traefik
+        ports:
+        - containerPort: 8080
+          name: web
+        resources: {{- toYaml .Values.gatewayApiGw.traefik.resources | nindent 10 }}
+        volumeMounts:
+        - mountPath: /etc/traefik/conf.d
+          name: config
+          readOnly: true
+      volumes:
+      - configMap:
+          name: {{ include "charts.fullname" . }}-gateway-api-gw-config
+        name: config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "charts.fullname" . }}-api-gw
+  labels:
+    app.kubernetes.io/component: api-gw
+    app.kubernetes.io/group: gateway
+  {{- include "charts.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.apiGw.type }}
+  selector:
+    app: haystack-rag
+    app.kubernetes.io/component: api-gw
+    app.kubernetes.io/group: gateway
+    {{- include "charts.selectorLabels" . | nindent 4 }}
+  ports:
+  {{- .Values.apiGw.ports | toYaml | nindent 2 }}

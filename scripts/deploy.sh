@@ -29,10 +29,14 @@ k3d image import backend-query:local -c "$CLUSTER_NAME"
 k3d image import frontend:local -c "$CLUSTER_NAME"
 
 # Deploy Kubernetes manifests from the kubernetes/ directory
-log "Deploying Kubernetes manifests..."
-kubectl apply -R -f kubernetes/
+# log "Deploying Kubernetes manifests..."
+# kubectl apply -R -f kubernetes/
 
-# Wait for deployments to be ready
+# Deploy Helm charts from the charts/ directory
+log "Deploying Helm chart 'haystack'..."
+helm upgrade --install haystack ./charts --namespace default
+
+# Optionally, wait for deployments to be ready
 # log "Waiting for deployments to be ready..."
 # kubectl rollout status deployment/haystack-rag-backend-query -n default --timeout=120s
 # kubectl rollout status deployment/haystack-rag-backend-indexing -n default --timeout=120s

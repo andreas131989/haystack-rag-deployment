@@ -23,7 +23,7 @@ spec:
     spec:
       initContainers:
       - name: opensearch-init
-        image: busybox
+        image: busybox:latest
         command: ['sh', '-c', 'until nc -z haystack-rag-opensearch 9200; do echo "Waiting for OpenSearch..."; sleep 5; done']
       containers:
       - name: indexing

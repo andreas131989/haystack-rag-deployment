@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "charts.fullname" . }}-backend-config
+  labels:
+    app.kubernetes.io/group: backend
+  {{- include "charts.labels" . | nindent 4 }}
+data:
+  GENERATOR: {{ .Values.backendConfig.generator | quote }}
+  HAYSTACK_LOG_LEVEL: {{ .Values.backendConfig.haystackLogLevel | quote }}
+  INDEX_ON_STARTUP: {{ .Values.backendConfig.indexOnStartup | quote }}
+  LOG_LEVEL: {{ .Values.backendConfig.logLevel | quote }}
+  OPENSEARCH_HOST: {{ .Values.backendConfig.opensearchHost | quote }}
+  PYTHONUNBUFFERED: {{ .Values.backendConfig.pythonunbuffered | quote }}
+  TOKENIZERS_PARALLELISM: {{ .Values.backendConfig.tokenizersParallelism | quote
+    }}
+  USE_OPENAI_EMBEDDER: {{ .Values.backendConfig.useOpenaiEmbedder | quote }}
