@@ -15,6 +15,7 @@ This repository provides a **Kubernetes-based**, **cloud-agnostic**, **on-premis
   - [Build Docker Image](#build-docker-image)
   - [Run the Deployment Container](#run-the-deployment-container)
   - [Access the Application](#access-the-application)
+- [Deployment Steps For Kubernetes](#deployment-steps-for-kubernetes)
 - [Verification Steps](#verification-steps)
 - [Additional Considerations](#additional-considerations)
   - [Airgapped Deployment](#airgapped-deployment)
@@ -50,7 +51,11 @@ You will need to have the following prerequisites completed. Optionally, you can
 
 ## Deployment Steps
 
-### Adjust Hosts File
+### Create your .env file
+
+You will need to create a `.env` file in the `/config` directory following the provided example `.env.example` that includes the opensearch username, password and your openAI key.
+
+### Adjust Hosts File (if you used either of the prerequisites scripts skip this step)
 
 Edit your hosts file:
 - Linux/Mac: `/etc/hosts`
@@ -104,7 +109,9 @@ You will be able to upload a document and use the query functionality.
 openaiApiKey: "ssj-test-project"
 ```
 
----
+## Deployment Steps For Kubernetes
+To deploy the kubernetes manifests, you can execute the `scripts/deploy_k8s.sh` script from inside the container. Note that it assumes there is a cluster already deployed and running.
+
 
 ## Verification Steps
 
@@ -169,16 +176,6 @@ docker exec -it <container-id> bash
 
 ## Additional Considerations
 
-### Airgapped Deployment
-
-- Guidance for deploying in offline environments.
-
-### Integration with Alternative Password Stores
-
-- Instructions for using external secret/password management tools.
-
-### Monitoring and Logging Integration
-
-- Recommendations for integrating monitoring/logging solutions like **Prometheus**, **Grafana**, or the **Elastic Stack**.
+For Airgapped Deployment, Integration with Alternative Password Stores and Monitoring and Logging Integration feel free to consult the [Bonus Points Overview](docs/bonus-points-overview.md) doc.
 
 ---

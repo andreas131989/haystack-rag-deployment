@@ -7,6 +7,11 @@ log() {
 
 CLUSTER_NAME="haystack-cluster"
 
+if [ ! -f /app/config/.env ]; then
+    echo "Error: .env not found. Exiting." >&2
+    exit 1
+fi
+
 # Create k3d cluster if it doesn't exist
 if k3d cluster list | grep -q "$CLUSTER_NAME"; then
     log "Cluster '$CLUSTER_NAME' already exists. Skipping creation."
@@ -33,7 +38,11 @@ k3d image import frontend:local -c "$CLUSTER_NAME"
 # Deploy Helm charts from the charts/ directory in the haystack namespace
 kubectl create ns haystack
 log "Deploying Helm chart 'haystack'..."
-helm upgrade --install haystack ./charts --namespace haystack
+export $(cat /app/config/.env | xargs)
+helm upgrade --install haystack ./charts --namespace haystack \
+  --set secrets.openaiApiKey="$OPENAI_KEY" \
+  --set secrets.opensearchPassword="$OPENSEARCH_PASSWORD" \
+  --set secrets.opensearchUser="$OPENSEARCH_USER"
 
 # Wait for helm deployments to be ready
 log "Waiting for helm Haystack release to be ready..."

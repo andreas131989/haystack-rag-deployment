@@ -14,7 +14,7 @@ backendConfig:
   haystackLogLevel: INFO
   indexOnStartup: "true"
   logLevel: INFO
-  opensearchHost: https://haystack-rag-opensearch.default.svc.cluster.local:9200
+  opensearchHost: https://haystack-rag-opensearch.haystack.svc.cluster.local:9200
   pythonunbuffered: "1"
   tokenizersParallelism: "false"
   useOpenaiEmbedder: "false"
@@ -213,6 +213,6 @@ searchOpensearch:
       requests:
         storage: 30Gi
 secrets:
-  openaiApiKey: "ssj-test-project"
-  opensearchPassword: "admin"
-  opensearchUser: "admin"
+  openaiApiKey: "{{ .Values.secrets.openaiApiKey }}"
+  opensearchPassword: "{{ .Values.secrets.opensearchPassword }}"
+  opensearchUser: "{{ .Values.secrets.opensearchUser }}"

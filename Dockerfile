@@ -1,5 +1,4 @@
 # Deployment container with all necessary tools
-
 FROM ubuntu:20.04 as deploy-container
 LABEL maintainer="Andreas Krivas <an.krivas@gmail.com>"
 ENV DEBIAN_FRONTEND=noninteractive
@@ -31,7 +30,7 @@ RUN curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
 WORKDIR /app
 RUN mkdir -p /app/config
 
-# Copy deployment scripts and Kubernetes manifests
+# Copy deployment scripts, Kubernetes manifests, and Helm charts
 COPY scripts/ scripts/
 COPY kubernetes/ kubernetes/
 COPY charts/ charts/
@@ -39,5 +38,6 @@ COPY charts/ charts/
 # Ensure new shells automatically export KUBECONFIG
 RUN echo 'export KUBECONFIG=/app/config/kubeconfig.yaml' >> ~/.bashrc
 
-# Set the default command to run the deploy script and then drop into a shell
-CMD ["bash", "-c", "./scripts/deploy.sh && exec bash"]
+# Set the default command to run the deploy script.
+# It will source /app/config/.env only if the file exists.
+CMD ["bash", "-c", "if [ -f /app/config/.env ]; then source /app/config/.env; fi && ./scripts/deploy.sh && exec bash"]
