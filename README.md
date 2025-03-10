@@ -38,7 +38,9 @@ This deployment solution packages the Haystack RAG application into a production
 
 ---
 
-## Pre-installation Requirements
+## Prerequisites
+
+You will need to have the following prerequisites completed. Optionally, you can use either `prerequisites-unix.sh` or `prerequisites-windows.ps1` depending on your operating system to verify or complete the setup.
 
 - Docker installed and running.
 - `make` installed (for building source images).
