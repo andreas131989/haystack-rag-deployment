@@ -72,7 +72,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: haystack-rag-secrets
-                key: openai-api-key
+                key: openai-key
         envFrom:
           - configMapRef:
               name: haystack-rag-backend-config

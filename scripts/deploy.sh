@@ -17,7 +17,9 @@ if k3d cluster list | grep -q "$CLUSTER_NAME"; then
     log "Cluster '$CLUSTER_NAME' already exists. Skipping creation."
 else
     log "Creating k3d cluster '$CLUSTER_NAME'..."
-    k3d cluster create "$CLUSTER_NAME" --wait \
+    k3d cluster create "$CLUSTER_NAME" --servers 3 --agents 3 --wait \
+      --port '32080:32080@server:0' \
+      --port '32081:32081@server:0' \
       --port '32090:32090@server:0' \
       --port '32091:32091@server:0'
 fi
