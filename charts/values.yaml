@@ -103,6 +103,7 @@ gatewayApiGw:
     - --entrypoints.traefik.address=:8081
     - --api.insecure=true
     - --log.level=DEBUG
+    - --ping
     image:
       repository: traefik
       tag: v2.10

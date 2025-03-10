@@ -40,10 +40,28 @@ spec:
           value: {{ quote .Values.kubernetesClusterDomain }}
         image: {{ .Values.gatewayApiGw.traefik.image.repository }}:{{ .Values.gatewayApiGw.traefik.image.tag
           | default .Chart.AppVersion }}
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
         name: traefik
         ports:
-        - containerPort: 8080
-          name: web
+        - name: web
+          containerPort: 8080 
+        - name: traefik
+          containerPort: 8081
         resources: {{- toYaml .Values.gatewayApiGw.traefik.resources | nindent 10 }}
         volumeMounts:
         - mountPath: /etc/traefik/conf.d

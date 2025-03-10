@@ -12,7 +12,9 @@ if k3d cluster list | grep -q "$CLUSTER_NAME"; then
     log "Cluster '$CLUSTER_NAME' already exists. Skipping creation."
 else
     log "Creating k3d cluster '$CLUSTER_NAME'..."
-    k3d cluster create "$CLUSTER_NAME" --wait --port '32090:32090@server:0'
+    k3d cluster create "$CLUSTER_NAME" --wait \
+      --port '32090:32090@server:0' \
+      --port '32091:32091@server:0'
 fi
 
 # Write kubeconfig to persistent location
@@ -28,18 +30,15 @@ k3d image import backend-indexing:local -c "$CLUSTER_NAME"
 k3d image import backend-query:local -c "$CLUSTER_NAME"
 k3d image import frontend:local -c "$CLUSTER_NAME"
 
-# Deploy Kubernetes manifests from the kubernetes/ directory
-# log "Deploying Kubernetes manifests..."
-# kubectl apply -R -f kubernetes/
-
-# Deploy Helm charts from the charts/ directory
+# Deploy Helm charts from the charts/ directory in the haystack namespace
+kubectl create ns haystack
 log "Deploying Helm chart 'haystack'..."
-helm upgrade --install haystack ./charts --namespace default
+helm upgrade --install haystack ./charts --namespace haystack
 
-# Optionally, wait for deployments to be ready
-# log "Waiting for deployments to be ready..."
-# kubectl rollout status deployment/haystack-rag-backend-query -n default --timeout=120s
-# kubectl rollout status deployment/haystack-rag-backend-indexing -n default --timeout=120s
-# kubectl rollout status deployment/haystack-rag-frontend -n default --timeout=120s
+# Wait for helm deployments to be ready
+log "Waiting for helm Haystack release to be ready..."
+kubectl rollout status deployment/haystack-rag-backend-query -n haystack --timeout=300s
+kubectl rollout status deployment/haystack-rag-backend-indexing -n haystack --timeout=300s
+kubectl rollout status deployment/haystack-rag-frontend -n haystack --timeout=300s
 
 log "Deployment complete! You can now interact with your cluster."

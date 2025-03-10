@@ -5,8 +5,6 @@ metadata:
   labels:
     app.kubernetes.io/component: opensearch
     app.kubernetes.io/group: search
-    # Optionally include other common labels here (but not ones that don't match the pod)
-    # For example, you might include a release label:
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   type: {{ .Values.opensearch.type }}
@@ -103,4 +101,4 @@ spec:
       - ReadWriteOnce
       resources: {{ .Values.searchOpensearch.volumeClaims.opensearchData | toYaml |
         nindent 8 }}
-      storageClassName: local-path
+      storageClassName: {{ .Values.pvc.fileStorage.storageClass | quote }}

@@ -71,7 +71,7 @@ spec:
       initContainers:
       - name: opensearch-init
         resources: {}
-        command: ['sh', '-c', 'until nc -z -w 1 haystack-rag-opensearch.default.svc.cluster.local 9200; do echo "Waiting for OpenSearch..."; sleep 5; done']
+        command: ['sh', '-c', 'until nc -z -w 1 haystack-rag-opensearch.haystack.svc.cluster.local 9200; do echo "Waiting for OpenSearch..."; sleep 5; done']
         env:
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ quote .Values.kubernetesClusterDomain }}
