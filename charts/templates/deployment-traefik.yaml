@@ -5,6 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/component: api-gw
     app.kubernetes.io/group: gateway
+    app: {{ include "charts.fullname" . }}
   {{- include "charts.labels" . | nindent 4 }}
 data:
   traefik.yml: {{ .Values.gatewayApiGwConfig.traefikYml | toYaml | indent 1 }}
@@ -16,19 +17,20 @@ metadata:
   labels:
     app.kubernetes.io/component: api-gw
     app.kubernetes.io/group: gateway
+    app: {{ include "charts.fullname" . }}
   {{- include "charts.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.gatewayApiGw.replicas }}
   selector:
     matchLabels:
-      app: haystack-rag
+      app: {{ include "charts.fullname" . }}
       app.kubernetes.io/component: api-gw
       app.kubernetes.io/group: gateway
     {{- include "charts.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: haystack-rag
+        app: {{ include "charts.fullname" . }}
         app.kubernetes.io/component: api-gw
         app.kubernetes.io/group: gateway
       {{- include "charts.selectorLabels" . | nindent 8 }}
@@ -38,8 +40,7 @@ spec:
         env:
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ quote .Values.kubernetesClusterDomain }}
-        image: {{ .Values.gatewayApiGw.traefik.image.repository }}:{{ .Values.gatewayApiGw.traefik.image.tag
-          | default .Chart.AppVersion }}
+        image: {{ .Values.gatewayApiGw.traefik.image.repository }}:{{ .Values.gatewayApiGw.traefik.image.tag | default .Chart.AppVersion }}
         livenessProbe:
           httpGet:
             path: /ping
@@ -59,7 +60,7 @@ spec:
         name: traefik
         ports:
         - name: web
-          containerPort: 8080 
+          containerPort: 8080
         - name: traefik
           containerPort: 8081
         resources: {{- toYaml .Values.gatewayApiGw.traefik.resources | nindent 10 }}
@@ -79,11 +80,12 @@ metadata:
   labels:
     app.kubernetes.io/component: api-gw
     app.kubernetes.io/group: gateway
+    app: {{ include "charts.fullname" . }}
   {{- include "charts.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.apiGw.type }}
   selector:
-    app: haystack-rag
+    app: {{ include "charts.fullname" . }}
     app.kubernetes.io/component: api-gw
     app.kubernetes.io/group: gateway
     {{- include "charts.selectorLabels" . | nindent 4 }}

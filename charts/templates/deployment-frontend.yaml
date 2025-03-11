@@ -16,19 +16,20 @@ metadata:
   labels:
     app.kubernetes.io/component: frontend
     app.kubernetes.io/group: frontend
+    app: {{ include "charts.fullname" . }}
   {{- include "charts.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.frontend.replicas }}
   selector:
     matchLabels:
-      app: haystack-rag
+      app: {{ include "charts.fullname" . }}
       app.kubernetes.io/component: frontend
       app.kubernetes.io/group: frontend
     {{- include "charts.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: haystack-rag
+        app: {{ include "charts.fullname" . }}
         app.kubernetes.io/component: frontend
         app.kubernetes.io/group: frontend
       {{- include "charts.selectorLabels" . | nindent 8 }}
@@ -37,8 +38,7 @@ spec:
       - env:
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ quote .Values.kubernetesClusterDomain }}
-        image: {{ .Values.frontend.frontend.image.repository }}:{{ .Values.frontend.frontend.image.tag
-          | default .Chart.AppVersion }}
+        image: {{ .Values.frontend.frontend.image.repository }}:{{ .Values.frontend.frontend.image.tag | default .Chart.AppVersion }}
         imagePullPolicy: {{ .Values.frontend.frontend.imagePullPolicy }}
         livenessProbe:
           failureThreshold: 5

@@ -6,10 +6,12 @@ metadata:
     app.kubernetes.io/component: opensearch
     app.kubernetes.io/group: search
     app.kubernetes.io/instance: {{ .Release.Name }}
+    app: {{ include "charts.fullname" . }}
+  {{- include "charts.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.opensearch.type }}
   selector:
-    app: haystack-rag
+    app: {{ include "charts.fullname" . }}
     app.kubernetes.io/component: opensearch
     app.kubernetes.io/group: search
   ports:
@@ -22,19 +24,20 @@ metadata:
   labels:
     app.kubernetes.io/component: opensearch
     app.kubernetes.io/group: search
+    app: {{ include "charts.fullname" . }}
   {{- include "charts.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.searchOpensearch.replicas }}
   selector:
     matchLabels:
-      app: haystack-rag
+      app: {{ include "charts.fullname" . }}
       app.kubernetes.io/component: opensearch
       app.kubernetes.io/group: search
   serviceName: {{ include "charts.fullname" . }}-opensearch
   template:
     metadata:
       labels:
-        app: haystack-rag
+        app: {{ include "charts.fullname" . }}
         app.kubernetes.io/component: opensearch
         app.kubernetes.io/group: search
     spec:
@@ -43,14 +46,11 @@ spec:
         - name: discovery.type
           value: {{ quote .Values.searchOpensearch.opensearch.env.discoveryType }}
         - name: bootstrap.memory_lock
-          value: {{ quote .Values.searchOpensearch.opensearch.env.bootstrapMemoryLock
-            }}
+          value: {{ quote .Values.searchOpensearch.opensearch.env.bootstrapMemoryLock }}
         - name: OPENSEARCH_JAVA_OPTS
-          value: {{ quote .Values.searchOpensearch.opensearch.env.opensearchJavaOpts
-            }}
+          value: {{ quote .Values.searchOpensearch.opensearch.env.opensearchJavaOpts }}
         - name: OPENSEARCH_SECURITY_ENABLED
-          value: {{ quote .Values.searchOpensearch.opensearch.env.opensearchSecurityEnabled
-            }}
+          value: {{ quote .Values.searchOpensearch.opensearch.env.opensearchSecurityEnabled }}
         - name: OPENSEARCH_INITIAL_ADMIN_USER
           valueFrom:
             secretKeyRef:
@@ -63,8 +63,7 @@ spec:
               name: {{ include "charts.fullname" . }}-secrets
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ quote .Values.kubernetesClusterDomain }}
-        image: {{ .Values.searchOpensearch.opensearch.image.repository }}:{{ .Values.searchOpensearch.opensearch.image.tag
-          | default .Chart.AppVersion }}
+        image: {{ .Values.searchOpensearch.opensearch.image.repository }}:{{ .Values.searchOpensearch.opensearch.image.tag | default .Chart.AppVersion }}
         imagePullPolicy: {{ .Values.searchOpensearch.opensearch.imagePullPolicy }}
         livenessProbe:
           failureThreshold: 10
@@ -86,8 +85,7 @@ spec:
           tcpSocket:
             port: 9200
           timeoutSeconds: 10
-        resources: {{- toYaml .Values.searchOpensearch.opensearch.resources | nindent
-          10 }}
+        resources: {{- toYaml .Values.searchOpensearch.opensearch.resources | nindent 10 }}
         volumeMounts:
         - mountPath: /usr/share/opensearch/data
           name: opensearch-data
@@ -99,6 +97,5 @@ spec:
     spec:
       accessModes:
       - ReadWriteOnce
-      resources: {{ .Values.searchOpensearch.volumeClaims.opensearchData | toYaml |
-        nindent 8 }}
+      resources: {{ .Values.searchOpensearch.volumeClaims.opensearchData | toYaml | nindent 8 }}
       storageClassName: {{ .Values.pvc.fileStorage.storageClass | quote }}

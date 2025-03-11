@@ -179,7 +179,7 @@ opensearch:
   type: ClusterIP
 pvc:
   fileStorage:
-    storageClass: local-path
+    storageClass: hostpath
     storageRequest: 30Gi
 query:
   ports:

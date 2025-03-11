@@ -5,19 +5,20 @@ metadata:
   labels:
     app.kubernetes.io/component: query
     app.kubernetes.io/group: backend
+    app: {{ include "charts.fullname" . }}
   {{- include "charts.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.backendQuery.replicas }}
   selector:
     matchLabels:
-      app: haystack-rag
+      app: {{ include "charts.fullname" . }}
       app.kubernetes.io/component: query
       app.kubernetes.io/group: backend
     {{- include "charts.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: haystack-rag
+        app: {{ include "charts.fullname" . }}
         app.kubernetes.io/component: query
         app.kubernetes.io/group: backend
       {{- include "charts.selectorLabels" . | nindent 8 }}
@@ -44,8 +45,7 @@ spec:
         envFrom:
         - configMapRef:
             name: {{ include "charts.fullname" . }}-backend-config
-        image: {{ .Values.backendQuery.query.image.repository }}:{{ .Values.backendQuery.query.image.tag
-          | default .Chart.AppVersion }}
+        image: {{ .Values.backendQuery.query.image.repository }}:{{ .Values.backendQuery.query.image.tag | default .Chart.AppVersion }}
         imagePullPolicy: {{ .Values.backendQuery.query.imagePullPolicy }}
         livenessProbe:
           failureThreshold: 18
@@ -75,5 +75,4 @@ spec:
         env:
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ quote .Values.kubernetesClusterDomain }}
-        image: {{ .Values.backendQuery.opensearchInit.image.repository }}:{{ .Values.backendQuery.opensearchInit.image.tag
-          | default .Chart.AppVersion }}
+        image: {{ .Values.backendQuery.opensearchInit.image.repository }}:{{ .Values.backendQuery.opensearchInit.image.tag | default .Chart.AppVersion }}

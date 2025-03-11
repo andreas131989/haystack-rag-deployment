@@ -4,6 +4,7 @@ metadata:
   name: {{ include "charts.fullname" . }}-file-storage
   labels:
     app.kubernetes.io/group: backend
+    app: {{ include "charts.fullname" . }}
   {{- include "charts.labels" . | nindent 4 }}
 spec:
   accessModes:

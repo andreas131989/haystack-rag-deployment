@@ -3,17 +3,17 @@ kind: Ingress
 metadata:
   name: {{ include "charts.fullname" . }}-haystack-rag
   labels:
-  {{- include "charts.labels" . | nindent 4 }}
+    {{- include "charts.labels" . | nindent 4 }}
 spec:
   ingressClassName: traefik
   rules:
   - host: rag.local
     http:
       paths:
-      - backend:
+      - path: /
+        pathType: Prefix
+        backend:
           service:
-            name: '{{ include "charts.fullname" . }}-api-gw'
+            name: {{ include "charts.fullname" . }}-api-gw
             port:
               number: 8080
-        path: /
-        pathType: Prefix

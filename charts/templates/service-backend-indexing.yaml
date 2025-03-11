@@ -5,11 +5,12 @@ metadata:
   labels:
     app.kubernetes.io/component: indexing
     app.kubernetes.io/group: backend
+    app: {{ include "charts.fullname" . }}
   {{- include "charts.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.indexing.type }}
   selector:
-    app: haystack-rag
+    app: {{ include "charts.fullname" . }}
     app.kubernetes.io/component: indexing
     app.kubernetes.io/group: backend
     {{- include "charts.selectorLabels" . | nindent 4 }}
