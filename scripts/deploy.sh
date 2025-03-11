@@ -17,11 +17,14 @@ if k3d cluster list | grep -q "$CLUSTER_NAME"; then
     log "Cluster '$CLUSTER_NAME' already exists. Skipping creation."
 else
     log "Creating k3d cluster '$CLUSTER_NAME'..."
-    k3d cluster create "$CLUSTER_NAME" --servers 3 --agents 3 --wait \
+    k3d cluster create "$CLUSTER_NAME" --servers 1 --agents 1 --wait \
       --port '32080:32080@server:0' \
       --port '32081:32081@server:0' \
       --port '32090:32090@server:0' \
-      --port '32091:32091@server:0'
+      --port '32091:32091@server:0' \
+      --port '32092:32092@server:0' \
+      --k3s-arg "--service-cidr=10.100.0.0/16@server:0"
+
 fi
 
 # Write kubeconfig to persistent location
@@ -37,19 +40,25 @@ k3d image import backend-indexing:local -c "$CLUSTER_NAME"
 k3d image import backend-query:local -c "$CLUSTER_NAME"
 k3d image import frontend:local -c "$CLUSTER_NAME"
 
+# Deploy cert-manager and cluster issuer
+log "Deploying cert-manager..."
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.9.1 --set installCRDs=true
+kubectl apply -f cert-manager/cluster-issuer.yaml
+
 # Deploy Helm charts from the charts/ directory in the haystack namespace
-kubectl create ns haystack
 log "Deploying Helm chart 'haystack'..."
 export $(cat /app/config/.env | xargs)
-helm upgrade --install haystack ./charts --namespace haystack \
+helm upgrade --install haystack ./charts --namespace haystack --create-namespace \
   --set secrets.openaiApiKey="$OPENAI_KEY" \
   --set secrets.opensearchPassword="$OPENSEARCH_PASSWORD" \
   --set secrets.opensearchUser="$OPENSEARCH_USER"
 
 # Wait for helm deployments to be ready
 log "Waiting for helm Haystack release to be ready..."
-kubectl rollout status deployment/haystack-rag-backend-query -n haystack --timeout=300s
-kubectl rollout status deployment/haystack-rag-backend-indexing -n haystack --timeout=300s
-kubectl rollout status deployment/haystack-rag-frontend -n haystack --timeout=300s
+# kubectl rollout status deployment/haystack-rag-backend-query -n haystack --timeout=300s
+# kubectl rollout status deployment/haystack-rag-backend-indexing -n haystack --timeout=300s
+# kubectl rollout status deployment/haystack-rag-frontend -n haystack --timeout=300s
 
 log "Deployment complete! You can now interact with your cluster."

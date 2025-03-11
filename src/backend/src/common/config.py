@@ -1,5 +1,6 @@
 import logging
 import sys
+import os
 
 from dotenv import load_dotenv
 from pathlib import Path
@@ -16,6 +17,7 @@ class Settings(BaseSettings):
     opensearch_host: str = Field(default="http://localhost:9200", description="OpenSearch host URL")
     opensearch_user: str = Field(default="admin", description="OpenSearch username")
     opensearch_password: str = Field(default="admin", description="OpenSearch password")
+    api_prefix: str = os.getenv("API_PREFIX", "")
     generator: str = Field(default="openai", description="Generator to use (currently openai only)")
     openai_api_key: str | None = Field(default=None, description="OpenAI API key")
     use_openai_embedder: bool = Field(default=True, description="Use OpenAI embedder")

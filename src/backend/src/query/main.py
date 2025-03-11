@@ -31,6 +31,7 @@ logging.getLogger("haystack").setLevel(settings.haystack_log_level)
 # Create a single instance of QueryService
 document_store = initialize_document_store()
 query_service = QueryService(document_store)
+API_PREFIX = settings.api_prefix.rstrip('/')
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -48,7 +49,7 @@ def get_query_service():
         raise HTTPException(status_code=500, detail="QueryService not initialized")
     return query_service
 
-@app.post("/search", response_model=QueryResultsResponse)
+@app.post(f"{API_PREFIX}/search", response_model=QueryResultsResponse)
 async def search(
     query: SearchQuery,
     service: QueryService = Depends(get_query_service)

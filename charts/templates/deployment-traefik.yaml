@@ -8,12 +8,13 @@ metadata:
     app: {{ include "charts.fullname" . }}
   {{- include "charts.labels" . | nindent 4 }}
 data:
-  traefik.yml: {{ .Values.gatewayApiGwConfig.traefikYml | toYaml | indent 1 }}
+  traefik.yml: |-
+{{ index .Values.gatewayApiGwConfig "traefik.yml" | indent 4 }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "charts.fullname" . }}-gateway-api-gw
+  name: {{ include "charts.fullname" . }}-api-gw
   labels:
     app.kubernetes.io/component: api-gw
     app.kubernetes.io/group: gateway
@@ -35,16 +36,28 @@ spec:
         app.kubernetes.io/group: gateway
       {{- include "charts.selectorLabels" . | nindent 8 }}
     spec:
+      initContainers:
+      - name: wait-for-frontend
+        image: busybox
+        command: ['sh', '-c', 'until nc -z -w 1 haystack-rag-frontend.haystack.svc.cluster.local 3000; do echo "Waiting for frontend..."; sleep 5; done']
       containers:
-      - args: {{- toYaml .Values.gatewayApiGw.traefik.args | nindent 8 }}
+      - name: traefik
+        image: {{ .Values.gatewayApiGw.traefik.image.repository }}:{{ .Values.gatewayApiGw.traefik.image.tag | default .Chart.AppVersion }}
+        args: {{- toYaml .Values.gatewayApiGw.traefik.args | nindent 8 }}
         env:
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ quote .Values.kubernetesClusterDomain }}
-        image: {{ .Values.gatewayApiGw.traefik.image.repository }}:{{ .Values.gatewayApiGw.traefik.image.tag | default .Chart.AppVersion }}
+        ports:
+        - name: web
+          containerPort: 8080
+        - name: traefik
+          containerPort: 8081
+        - name: websecure
+          containerPort: 443
         livenessProbe:
           httpGet:
             path: /ping
-            port: 8080
+            port: 8081
           initialDelaySeconds: 10
           periodSeconds: 30
           timeoutSeconds: 5
@@ -52,26 +65,26 @@ spec:
         readinessProbe:
           httpGet:
             path: /ping
-            port: 8080
+            port: 8081
           initialDelaySeconds: 5
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
-        name: traefik
-        ports:
-        - name: web
-          containerPort: 8080
-        - name: traefik
-          containerPort: 8081
         resources: {{- toYaml .Values.gatewayApiGw.traefik.resources | nindent 10 }}
         volumeMounts:
-        - mountPath: /etc/traefik/conf.d
-          name: config
+        - name: config
+          mountPath: /etc/traefik/conf.d
+          readOnly: true
+        - name: certs
+          mountPath: /certs
           readOnly: true
       volumes:
-      - configMap:
+      - name: config
+        configMap:
           name: {{ include "charts.fullname" . }}-gateway-api-gw-config
-        name: config
+      - name: certs
+        secret:
+          secretName: rag-local-tls
 ---
 apiVersion: v1
 kind: Service
@@ -90,4 +103,4 @@ spec:
     app.kubernetes.io/group: gateway
     {{- include "charts.selectorLabels" . | nindent 4 }}
   ports:
-  {{- .Values.apiGw.ports | toYaml | nindent 2 }}
+  {{- toYaml .Values.apiGw.ports | nindent 2 }}

@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "charts.fullname" . }}-api-ingress
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.priority: "100"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host | default "rag.local" }}
+      secretName: {{ .Values.ingress.tlsSecret | default "rag-local-tls" }}
+  rules:
+    - host: {{ .Values.ingress.host | default "rag.local" }}
+      http:
+        paths:
+          - path: {{ .Values.ingress.paths.search | default "/api/search" }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.ingress.services.query | default "haystack-rag-query" }}
+                port:
+                  number: {{ .Values.ingress.ports.query | default 8002 }}
+          - path: {{ .Values.ingress.paths.indexing | default "/api/files" }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.ingress.services.indexing | default "haystack-rag-indexing" }}
+                port:
+                  number: {{ .Values.ingress.ports.indexing | default 8001 }}

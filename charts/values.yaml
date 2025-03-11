@@ -8,6 +8,10 @@ apiGw:
     nodePort: 32091
     port: 8081
     targetPort: 8081
+  - name: websecure
+    nodePort: 32092
+    port: 443
+    targetPort: 443
   type: NodePort
 backendConfig:
   generator: openai
@@ -97,16 +101,19 @@ gatewayApiGw:
   replicas: 1
   traefik:
     args:
-    - --providers.file.directory=/etc/traefik/conf.d
-    - --providers.file.watch=true
-    - --entrypoints.web.address=:8080
-    - --entrypoints.traefik.address=:8081
-    - --api.insecure=true
-    - --log.level=DEBUG
-    - --ping
+      - --providers.kubernetesIngress.namespaces=haystack
+      - --configFile=/etc/traefik/traefik.yml
+      - --entrypoints.web.address=:8080
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.traefik.address=:8081
+      - --api.insecure=true
+      - --api.dashboard=true
+      - --api.debug=true
+      - --log.level=DEBUG
+      - --ping
     image:
       repository: traefik
-      tag: v2.10
+      tag: v3.3.4
     resources:
       limits:
         cpu: 200m
@@ -115,52 +122,48 @@ gatewayApiGw:
         cpu: 100m
         memory: 256Mi
 gatewayApiGwConfig:
-  traefikYml: |-
+  traefik.yml: |-
+    entryPoints:
+      web:
+        address: ":8080"
+      websecure:
+        address: ":443"
+        tls: {}  # Enables TLS on websecure
+      traefik:
+        address: ":8081"
+
+    tls:
+      stores:
+        default:
+          defaultCertificate:
+            certFile: "/certs/tls.crt"
+            keyFile: "/certs/tls.key"
+
     log:
       level: DEBUG
-    http:
-      routers:
-        router-api-files:
-          rule: "PathPrefix(`/api/files`)"
-          service: service-api-files
-          entryPoints:
-            - web
-          middlewares:
-            - strip-api-files
-        router-api-search:
-          rule: "PathPrefix(`/api/search`)"
-          service: service-api-search
-          entryPoints:
-            - web
-          middlewares:
-            - strip-api-search
-        router-frontend:
-          rule: "PathPrefix(`/`)"
-          service: service-frontend
-          entryPoints:
-            - web
-      middlewares:
-        strip-api-files:
-          stripPrefix:
-            prefixes:
-              - "/api"
-        strip-api-search:
-          stripPrefix:
-            prefixes:
-              - "/api"
-      services:
-        service-api-files:
-          loadBalancer:
-            servers:
-              - url: "http://haystack-rag-indexing:8001"
-        service-api-search:
-          loadBalancer:
-            servers:
-              - url: "http://haystack-rag-query:8002"
-        service-frontend:
-          loadBalancer:
-            servers:
-              - url: "http://haystack-rag-frontend:3000"
+
+    providers:
+      kubernetesIngress:
+        namespaces:
+          - haystack
+ingress:
+  host: rag.local
+  tlsSecret: rag-local-tls
+  paths:
+    search: /api/search
+    indexing: /api/files
+  services:
+    query: haystack-rag-query
+    indexing: haystack-rag-indexing
+  ports:
+    query: 8002
+    indexing: 8001
+frontendIngress:
+  host: rag.local
+  tlsSecret: rag-local-tls
+  path: /
+  serviceName: haystack-rag-frontend
+  servicePort: 3000
 indexing:
   ports:
   - name: indexing-api
@@ -179,7 +182,7 @@ opensearch:
   type: ClusterIP
 pvc:
   fileStorage:
-    storageClass: hostpath
+    storageClass: local-path
     storageRequest: 30Gi
 query:
   ports:

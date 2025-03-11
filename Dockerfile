@@ -34,6 +34,7 @@ RUN mkdir -p /app/config
 COPY scripts/ scripts/
 COPY kubernetes/ kubernetes/
 COPY charts/ charts/
+COPY cert-manager/ cert-manager/
 
 # Ensure new shells automatically export KUBECONFIG
 RUN echo 'export KUBECONFIG=/app/config/kubeconfig.yaml' >> ~/.bashrc

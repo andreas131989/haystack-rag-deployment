@@ -178,6 +178,6 @@ docker exec -it <container-id> bash
 
 For Airgapped Deployment, Integration with Alternative Password Stores and Monitoring and Logging Integration feel free to consult the [Bonus Points Overview](docs/bonus-points-overview.md) doc.
 
-To further improve the k3s cluster setup to mimic a production grade cluster, we can implement several more improvements that are documented in the [Production Grade K3s](docs/production-grade-k3s.md) document.
+To further improve the k3s cluster setup to mimic a production grade cluster, we can implement a couple more improvements that are documented in the same document.
 
 ---

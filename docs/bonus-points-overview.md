@@ -77,3 +77,10 @@ Implement **Prometheus**, **Grafana**, and **Loki** for comprehensive monitoring
 - **Resource Consumption:** Logging and monitoring can become resource-intensive at scale.
 
 ---
+## Additions for a more production grade setup
+
+### External Datastore
+By default, k3s uses SQLite, which isn’t ideal for HA. We can configure an external datastore (MySQL, PostgreSQL, etc.) to improve data durability and consistency.
+
+### CI/CD Integration
+Automate linting, testing, and deployment of the Helm charts using CI/CD pipelines. This ensures consistency and quick rollbacks in case of issues.

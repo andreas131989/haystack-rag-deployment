@@ -29,6 +29,7 @@ logging.getLogger("haystack").setLevel(settings.haystack_log_level)
 # Create a single instance of IndexingService
 document_store = initialize_document_store()
 indexing_service = IndexingService(document_store)
+API_PREFIX = settings.api_prefix.rstrip('/')
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -50,7 +51,7 @@ def get_indexing_service():
         raise HTTPException(status_code=500, detail="IndexingService not initialized")
     return indexing_service
 
-@app.post("/files", response_model=List[FilesUploadResponse])
+@app.post(f"{API_PREFIX}/files", response_model=List[FilesUploadResponse])
 async def upload_files(
     files: List[UploadFile] = File(...),
     service: IndexingService = Depends(get_indexing_service)
@@ -101,7 +102,7 @@ async def upload_files(
     status_code = 200 if all_successful else 500
     return JSONResponse(content=[response.dict() for response in responses], status_code=status_code)
 
-@app.get("/files", response_model=FilesListResponse)
+@app.get(f"{API_PREFIX}/files", response_model=FilesListResponse)
 async def get_files(
     service: IndexingService = Depends(get_indexing_service)
 ) -> FilesListResponse:
