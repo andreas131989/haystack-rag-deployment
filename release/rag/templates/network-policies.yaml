@@ -1,0 +1,232 @@
+---
+# Source: rag/templates/network-policies.yaml
+# 0. Default Deny Policy: Deny all ingress and egress by default for pods except Traefik
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: default
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: NotIn
+        values:
+          - api-gw
+  policyTypes:
+  - Ingress
+  - Egress
+---
+# Source: rag/templates/network-policies.yaml
+# 1. Ingress Policy for Traefik (API Gateway)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: np-haystack-rag-api-gw-ingress
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: haystack-rag
+      app.kubernetes.io/component: api-gw
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 8081
+    - protocol: TCP
+      port: 443
+---
+# Source: rag/templates/network-policies.yaml
+# 2. Ingress Policy for Frontend
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: np-haystack-rag-frontend-ingress
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: haystack-rag
+      app.kubernetes.io/component: frontend
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: haystack-rag
+          app.kubernetes.io/component: api-gw
+    ports:
+    - protocol: TCP
+      port: 3000
+---
+# Source: rag/templates/network-policies.yaml
+# 3. Ingress Policy for Backend Query
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: np-haystack-rag-query-ingress
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: haystack-rag
+      app.kubernetes.io/component: query
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: haystack-rag
+          app.kubernetes.io/component: api-gw
+    ports:
+    - protocol: TCP
+      port: 8002
+---
+# Source: rag/templates/network-policies.yaml
+# 4. Ingress Policy for Backend Indexing
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: np-haystack-rag-indexing-ingress
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: haystack-rag
+      app.kubernetes.io/component: indexing
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: haystack-rag
+          app.kubernetes.io/component: api-gw
+    ports:
+    - protocol: TCP
+      port: 8001
+---
+# Source: rag/templates/network-policies.yaml
+# 5. Ingress Policy for OpenSearch
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: np-haystack-rag-opensearch-ingress
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: haystack-rag
+      app.kubernetes.io/component: opensearch
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: haystack-rag
+          app.kubernetes.io/component: indexing
+    - podSelector:
+        matchLabels:
+          app: haystack-rag
+          app.kubernetes.io/component: query
+    ports:
+    - protocol: TCP
+      port: 9200
+    - protocol: TCP
+      port: 9600
+---
+# Source: rag/templates/network-policies.yaml
+# 6. Egress Policy for All haystack‑rag Pods (except Traefik)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: np-haystack-rag-egress
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: haystack-rag
+  policyTypes:
+  - Egress
+  egress:
+  # Allow DNS resolution using the services CIDR (10.100.0.0/16)
+  - to:
+    - ipBlock:
+        cidr: 10.100.0.0/16
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # Allow DNS resolution to kube-dns pods in kube-system
+  - to:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: kube-system
+        podSelector:
+          matchLabels:
+            k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # Allow internal communication among haystack-rag pods
+  - to:
+    - podSelector:
+        matchLabels:
+          app: haystack-rag
+  # Allow outbound API server traffic (e.g. for certificate retrieval)
+  - to:
+    - ipBlock:
+        cidr: "10.100.0.0/16"
+    ports:
+    - protocol: TCP
+      port: 443
+---
+# Source: rag/templates/network-policies.yaml
+# 7. Egress Policy for Traefik (API Gateway) – Unrestricted
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: np-traefik-egress-unrestricted
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: haystack-rag
+      app.kubernetes.io/component: api-gw
+  policyTypes:
+  - Egress
+  egress:
+  - {}
+---
+# Source: rag/templates/network-policies.yaml
+# 8. Egress Policy for backend – Unrestricted
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: np-backend-egress-unrestricted
+  namespace: default
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: In
+        values:
+          - query
+          - indexing
+  policyTypes:
+  - Egress
+  egress:
+  - {}
