@@ -19,30 +19,16 @@ data:
           service: service-api-files
           entryPoints:
             - web
-          middlewares:
-            - strip-api-files
         router-api-search:
           rule: "PathPrefix(`/api/search`)"
           service: service-api-search
           entryPoints:
             - web
-          middlewares:
-            - strip-api-search
         router-frontend:
           rule: "PathPrefix(`/`)"
           service: service-frontend
           entryPoints:
             - web
-
-      middlewares:
-        strip-api-files:
-          stripPrefix:
-            prefixes:
-              - "/api"
-        strip-api-search:
-          stripPrefix:
-            prefixes:
-              - "/api"
 
       services:
         service-api-files:
