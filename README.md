@@ -27,7 +27,7 @@ This repository provides a **Kubernetes-based**, **cloud-agnostic**, **on-premis
 
 ## Overview
 
-This deployment solution packages the Haystack RAG application into a production-grade Kubernetes environment. It leverages Kubernetes to deploy components (Frontend, Backend, OpenSearch, etc.) as workloads (Deployments, Services, ConfigMaps, Secrets, and Ingress). A Helm chart packages Kubernetes manifests with configurable `values.yaml`. Networking and ingress are configured via **Traefik** to expose frontend and API endpoints accessible via a custom hostname (`rag.local`).
+This deployment solution packages the Haystack RAG application into a production-grade Kubernetes environment. It leverages Kubernetes to deploy components (Frontend, Backend, OpenSearch, etc.) as workloads (Deployments, Services, ConfigMaps, Secrets, and Ingress). A Helm chart packages Kubernetes manifests with configurable `values.yaml`. Networking and ingress are configured via **Traefik** to expose frontend and API endpoints accessible via a custom hostname (`rag.local`). Note that the chosen kubernetes distribution (k3s) has built-in a traefik ingress class. If you deploy in another distribution, you would need to ensure it exists.
 
 ---
 

@@ -1,0 +1,27 @@
+---
+# Source: rag/templates/service-frontend.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: haystack-rag-frontend
+  labels:
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/group: frontend
+    app: haystack-rag
+    helm.sh/chart: rag-0.1.0
+    app.kubernetes.io/name: rag
+    app.kubernetes.io/instance: haystack
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  selector:
+    app: haystack-rag
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/group: frontend
+    app.kubernetes.io/name: rag
+    app.kubernetes.io/instance: haystack
+  ports:
+  - name: react-app
+    port: 3000
+    targetPort: 3000

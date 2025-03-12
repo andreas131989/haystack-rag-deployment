@@ -1,0 +1,27 @@
+---
+# Source: rag/templates/service-backend-indexing.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: haystack-rag-indexing
+  labels:
+    app.kubernetes.io/component: indexing
+    app.kubernetes.io/group: backend
+    app: haystack-rag
+    helm.sh/chart: rag-0.1.0
+    app.kubernetes.io/name: rag
+    app.kubernetes.io/instance: haystack
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  selector:
+    app: haystack-rag
+    app.kubernetes.io/component: indexing
+    app.kubernetes.io/group: backend
+    app.kubernetes.io/name: rag
+    app.kubernetes.io/instance: haystack
+  ports:
+  - name: indexing-api
+    port: 8001
+    targetPort: 8001

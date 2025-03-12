@@ -1,0 +1,28 @@
+---
+# Source: rag/templates/ingress-frontend.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: haystack-rag-frontend-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.priority: "1"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - rag.local
+      secretName: rag-local-tls
+  rules:
+    - host: rag.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: haystack-rag-frontend
+                port:
+                  number: 3000

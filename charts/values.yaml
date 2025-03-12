@@ -18,7 +18,7 @@ backendConfig:
   haystackLogLevel: INFO
   indexOnStartup: "true"
   logLevel: INFO
-  opensearchHost: https://haystack-rag-opensearch.haystack.svc.cluster.local:9200
+  opensearchHost: https://haystack-rag-opensearch.{{ .Release.Namespace }}.svc.cluster.local:9200
   pythonunbuffered: "1"
   tokenizersParallelism: "false"
   useOpenaiEmbedder: "false"
@@ -101,7 +101,7 @@ gatewayApiGw:
   replicas: 1
   traefik:
     args:
-      - --providers.kubernetesIngress.namespaces=haystack
+      - --providers.kubernetesIngress.namespaces={{ .Release.Namespace }}
       - --configFile=/etc/traefik/traefik.yml
       - --entrypoints.web.address=:8080
       - --entrypoints.websecure.address=:443
@@ -145,7 +145,7 @@ gatewayApiGwConfig:
     providers:
       kubernetesIngress:
         namespaces:
-          - haystack
+          - {{ .Release.Namespace }}
 ingress:
   host: rag.local
   tlsSecret: rag-local-tls

@@ -1,0 +1,75 @@
+---
+# Source: rag/templates/rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: haystack-rag-sa
+  namespace: default
+---
+# Source: rag/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: traefik-ingress-clusterrole
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses", "ingressclasses"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["discovery.k8s.io"]
+  resources: ["endpointslices"]
+  verbs: ["get", "list", "watch"]
+---
+# Source: rag/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: traefik-ingress-clusterrolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: traefik-ingress-clusterrole
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: default
+---
+# Source: rag/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: haystack-rag-role
+  namespace: default
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses", "ingressclasses"]
+  verbs: ["get", "list", "watch"]
+---
+# Source: rag/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: haystack-rag-rolebinding
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: haystack-rag-sa
+  namespace: default
+roleRef:
+  kind: Role
+  name: haystack-rag-role
+  apiGroup: rbac.authorization.k8s.io

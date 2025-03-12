@@ -1,0 +1,15 @@
+---
+# Source: rag/templates/certificate.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: rag-local-tls
+  namespace: default
+spec:
+  secretName: rag-local-tls
+  commonName: rag.local
+  dnsNames:
+    - rag.local
+  issuerRef:
+    name: selfsigned-cluster-issuer
+    kind: ClusterIssuer

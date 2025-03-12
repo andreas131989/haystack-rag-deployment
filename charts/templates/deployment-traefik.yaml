@@ -9,7 +9,7 @@ metadata:
   {{- include "charts.labels" . | nindent 4 }}
 data:
   traefik.yml: |-
-{{ index .Values.gatewayApiGwConfig "traefik.yml" | indent 4 }}
+{{ tpl (index .Values.gatewayApiGwConfig "traefik.yml") . | indent 4 }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -39,11 +39,14 @@ spec:
       initContainers:
       - name: wait-for-frontend
         image: busybox
-        command: ['sh', '-c', 'until nc -z -w 1 haystack-rag-frontend.haystack.svc.cluster.local 3000; do echo "Waiting for frontend..."; sleep 5; done']
+        command: ['sh', '-c', 'until nc -z -w 1 haystack-rag-frontend.{{ .Release.Namespace }}.svc.cluster.local 3000; do echo "Waiting for frontend..."; sleep 5; done']
       containers:
       - name: traefik
         image: {{ .Values.gatewayApiGw.traefik.image.repository }}:{{ .Values.gatewayApiGw.traefik.image.tag | default .Chart.AppVersion }}
-        args: {{- toYaml .Values.gatewayApiGw.traefik.args | nindent 8 }}
+        args:
+        {{- range .Values.gatewayApiGw.traefik.args }}
+          - {{ tpl . $ | quote }}
+        {{- end }}
         env:
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ quote .Values.kubernetesClusterDomain }}

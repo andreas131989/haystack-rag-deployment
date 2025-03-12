@@ -1,0 +1,174 @@
+---
+# Source: rag/templates/deployment-traefik.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: haystack-rag-gateway-api-gw-config
+  labels:
+    app.kubernetes.io/component: api-gw
+    app.kubernetes.io/group: gateway
+    app: haystack-rag
+    helm.sh/chart: rag-0.1.0
+    app.kubernetes.io/name: rag
+    app.kubernetes.io/instance: haystack
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+data:
+  traefik.yml: |-
+    entryPoints:
+      web:
+        address: ":8080"
+      websecure:
+        address: ":443"
+        tls: {}  # Enables TLS on websecure
+      traefik:
+        address: ":8081"
+    
+    tls:
+      stores:
+        default:
+          defaultCertificate:
+            certFile: "/certs/tls.crt"
+            keyFile: "/certs/tls.key"
+    
+    log:
+      level: DEBUG
+    
+    providers:
+      kubernetesIngress:
+        namespaces:
+          - default
+---
+# Source: rag/templates/deployment-traefik.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: haystack-rag-api-gw
+  labels:
+    app.kubernetes.io/component: api-gw
+    app.kubernetes.io/group: gateway
+    app: haystack-rag
+    helm.sh/chart: rag-0.1.0
+    app.kubernetes.io/name: rag
+    app.kubernetes.io/instance: haystack
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: NodePort
+  selector:
+    app: haystack-rag
+    app.kubernetes.io/component: api-gw
+    app.kubernetes.io/group: gateway
+    app.kubernetes.io/name: rag
+    app.kubernetes.io/instance: haystack
+  ports:
+  - name: web
+    nodePort: 32090
+    port: 8080
+    targetPort: 8080
+  - name: traefik
+    nodePort: 32091
+    port: 8081
+    targetPort: 8081
+  - name: websecure
+    nodePort: 32092
+    port: 443
+    targetPort: 443
+---
+# Source: rag/templates/deployment-traefik.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: haystack-rag-api-gw
+  labels:
+    app.kubernetes.io/component: api-gw
+    app.kubernetes.io/group: gateway
+    app: haystack-rag
+    helm.sh/chart: rag-0.1.0
+    app.kubernetes.io/name: rag
+    app.kubernetes.io/instance: haystack
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: haystack-rag
+      app.kubernetes.io/component: api-gw
+      app.kubernetes.io/group: gateway
+      app.kubernetes.io/name: rag
+      app.kubernetes.io/instance: haystack
+  template:
+    metadata:
+      labels:
+        app: haystack-rag
+        app.kubernetes.io/component: api-gw
+        app.kubernetes.io/group: gateway
+        app.kubernetes.io/name: rag
+        app.kubernetes.io/instance: haystack
+    spec:
+      initContainers:
+      - name: wait-for-frontend
+        image: busybox
+        command: ['sh', '-c', 'until nc -z -w 1 haystack-rag-frontend.default.svc.cluster.local 3000; do echo "Waiting for frontend..."; sleep 5; done']
+      containers:
+      - name: traefik
+        image: traefik:v3.3.4
+        args:
+          - "--providers.kubernetesIngress.namespaces=default"
+          - "--configFile=/etc/traefik/traefik.yml"
+          - "--entrypoints.web.address=:8080"
+          - "--entrypoints.websecure.address=:443"
+          - "--entrypoints.traefik.address=:8081"
+          - "--api.insecure=true"
+          - "--api.dashboard=true"
+          - "--api.debug=true"
+          - "--log.level=DEBUG"
+          - "--ping"
+        env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: "cluster.local"
+        ports:
+        - name: web
+          containerPort: 8080
+        - name: traefik
+          containerPort: 8081
+        - name: websecure
+          containerPort: 443
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 8081
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        resources:
+          limits:
+            cpu: 200m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        volumeMounts:
+        - name: config
+          mountPath: /etc/traefik/conf.d
+          readOnly: true
+        - name: certs
+          mountPath: /certs
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: haystack-rag-gateway-api-gw-config
+      - name: certs
+        secret:
+          secretName: rag-local-tls

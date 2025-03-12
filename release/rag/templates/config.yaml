@@ -1,0 +1,22 @@
+---
+# Source: rag/templates/config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: haystack-rag-backend-config
+  labels:
+    app.kubernetes.io/group: backend
+    helm.sh/chart: rag-0.1.0
+    app.kubernetes.io/name: rag
+    app.kubernetes.io/instance: haystack
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+data:
+  GENERATOR: "openai"
+  HAYSTACK_LOG_LEVEL: "INFO"
+  INDEX_ON_STARTUP: "true"
+  LOG_LEVEL: "INFO"
+  OPENSEARCH_HOST: "https://haystack-rag-opensearch.default.svc.cluster.local:9200"
+  PYTHONUNBUFFERED: "1"
+  TOKENIZERS_PARALLELISM: "false"
+  USE_OPENAI_EMBEDDER: "false"

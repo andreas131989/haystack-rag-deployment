@@ -1,27 +1,35 @@
+---
+# Source: rag/templates/deployment-backend-indexing.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "charts.fullname" . }}-backend-indexing
+  name: haystack-rag-backend-indexing
   labels:
     app.kubernetes.io/component: indexing
     app.kubernetes.io/group: backend
-    app: {{ include "charts.fullname" . }}
-  {{- include "charts.labels" . | nindent 4 }}
+    app: haystack-rag
+    helm.sh/chart: rag-0.1.0
+    app.kubernetes.io/name: rag
+    app.kubernetes.io/instance: haystack
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
 spec:
-  replicas: {{ .Values.backendIndexing.replicas }}
+  replicas: 1
   selector:
     matchLabels:
-      app: {{ include "charts.fullname" . }}
+      app: haystack-rag
       app.kubernetes.io/component: indexing
       app.kubernetes.io/group: backend
-    {{- include "charts.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/name: rag
+      app.kubernetes.io/instance: haystack
   template:
     metadata:
       labels:
-        app: {{ include "charts.fullname" . }}
+        app: haystack-rag
         app.kubernetes.io/component: indexing
         app.kubernetes.io/group: backend
-      {{- include "charts.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/name: rag
+        app.kubernetes.io/instance: haystack
     spec:
       containers:
       - env:
@@ -29,24 +37,24 @@ spec:
           valueFrom:
             secretKeyRef:
               key: opensearch-user
-              name: {{ include "charts.fullname" . }}-secrets
+              name: haystack-rag-secrets
         - name: OPENSEARCH_PASSWORD
           valueFrom:
             secretKeyRef:
               key: opensearch-password
-              name: {{ include "charts.fullname" . }}-secrets
+              name: haystack-rag-secrets
         - name: OPENAI_API_KEY
           valueFrom:
             secretKeyRef:
               key: openai-api-key
-              name: {{ include "charts.fullname" . }}-secrets
+              name: haystack-rag-secrets
         - name: KUBERNETES_CLUSTER_DOMAIN
-          value: {{ quote .Values.kubernetesClusterDomain }}
+          value: "cluster.local"
         envFrom:
         - configMapRef:
-            name: {{ include "charts.fullname" . }}-backend-config
-        image: {{ .Values.backendIndexing.indexing.image.repository }}:{{ .Values.backendIndexing.indexing.image.tag | default .Chart.AppVersion }}
-        imagePullPolicy: {{ .Values.backendIndexing.indexing.imagePullPolicy }}
+            name: haystack-rag-backend-config
+        image: backend-indexing:local
+        imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 18
           httpGet:
@@ -67,19 +75,27 @@ spec:
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
-        resources: {{- toYaml .Values.backendIndexing.indexing.resources | nindent 10 }}
+        resources:
+          limits:
+            cpu: 500m
+            ephemeral-storage: 20Gi
+            memory: 2Gi
+          requests:
+            cpu: 250m
+            ephemeral-storage: 10Gi
+            memory: 1Gi
         volumeMounts:
         - mountPath: /app/files
           name: file-storage
       initContainers:
-      - command: ['sh', '-c', 'until nc -z -w 1 haystack-rag-opensearch.{{ .Release.Namespace }}.svc.cluster.local 9200; do echo "Waiting for OpenSearch..."; sleep 5; done']
+      - command: ['sh', '-c', 'until nc -z -w 1 haystack-rag-opensearch.default.svc.cluster.local 9200; do echo "Waiting for OpenSearch..."; sleep 5; done']
         env:
         - name: KUBERNETES_CLUSTER_DOMAIN
-          value: {{ quote .Values.kubernetesClusterDomain }}
-        image: {{ .Values.backendIndexing.opensearchInit.image.repository }}:{{ .Values.backendIndexing.opensearchInit.image.tag | default .Chart.AppVersion }}
+          value: "cluster.local"
+        image: busybox:latest
         name: opensearch-init
         resources: {}
       volumes:
       - name: file-storage
         persistentVolumeClaim:
-          claimName: {{ include "charts.fullname" . }}-file-storage
+          claimName: haystack-rag-file-storage

@@ -10,7 +10,7 @@ data:
   HAYSTACK_LOG_LEVEL: {{ .Values.backendConfig.haystackLogLevel | quote }}
   INDEX_ON_STARTUP: {{ .Values.backendConfig.indexOnStartup | quote }}
   LOG_LEVEL: {{ .Values.backendConfig.logLevel | quote }}
-  OPENSEARCH_HOST: {{ .Values.backendConfig.opensearchHost | quote }}
+  OPENSEARCH_HOST: {{ tpl .Values.backendConfig.opensearchHost . | quote }}
   PYTHONUNBUFFERED: {{ .Values.backendConfig.pythonunbuffered | quote }}
   TOKENIZERS_PARALLELISM: {{ .Values.backendConfig.tokenizersParallelism | quote
     }}
