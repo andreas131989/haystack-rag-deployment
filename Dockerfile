@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     bash \
     sudo \
+    gettext-base \
     apt-transport-https \
     gnupg2 \
     docker.io && \
@@ -32,7 +33,8 @@ RUN mkdir -p /app/config
 
 # Copy deployment scripts, Kubernetes manifests, and Helm charts
 COPY scripts/ scripts/
-COPY kubernetes/ kubernetes/
+COPY release/ release/
+COPY kubernetes-static-routing/ kubernetes-static-routing/
 COPY charts/ charts/
 COPY cert-manager/ cert-manager/
 
