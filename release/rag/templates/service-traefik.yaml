@@ -1,0 +1,35 @@
+---
+# Source: rag/templates/service-traefik.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: haystack-rag-api-gw
+  labels:
+    app.kubernetes.io/component: api-gw
+    app.kubernetes.io/group: gateway
+    app: haystack-rag
+    helm.sh/chart: rag-0.1.0
+    app.kubernetes.io/name: rag
+    app.kubernetes.io/instance: haystack
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: NodePort
+  selector:
+    app: haystack-rag
+    app.kubernetes.io/component: api-gw
+    app.kubernetes.io/group: gateway
+    app.kubernetes.io/name: rag
+    app.kubernetes.io/instance: haystack
+  ports:
+  - name: web
+    nodePort: 32090
+    port: 8080
+    targetPort: 8080
+  - name: traefik
+    port: 8081
+    targetPort: 8081
+  - name: websecure
+    nodePort: 32092
+    port: 443
+    targetPort: 443

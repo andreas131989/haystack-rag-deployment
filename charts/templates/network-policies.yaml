@@ -19,12 +19,12 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: np-haystack-rag-api-gw-ingress
+  name: np-{{ include "charts.fullname" . }}-api-gw-ingress
   namespace: {{ .Release.Namespace }}
 spec:
   podSelector:
     matchLabels:
-      app: haystack-rag
+      app: {{ include "charts.fullname" . }}
       app.kubernetes.io/component: api-gw
   policyTypes:
   - Ingress
@@ -44,12 +44,12 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: np-haystack-rag-frontend-ingress
+  name: np-{{ include "charts.fullname" . }}-frontend-ingress
   namespace: {{ .Release.Namespace }}
 spec:
   podSelector:
     matchLabels:
-      app: haystack-rag
+      app: {{ include "charts.fullname" . }}
       app.kubernetes.io/component: frontend
   policyTypes:
   - Ingress
@@ -57,7 +57,7 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          app: haystack-rag
+          app: {{ include "charts.fullname" . }}
           app.kubernetes.io/component: api-gw
     ports:
     - protocol: TCP
@@ -67,12 +67,12 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: np-haystack-rag-query-ingress
+  name: np-{{ include "charts.fullname" . }}-query-ingress
   namespace: {{ .Release.Namespace }}
 spec:
   podSelector:
     matchLabels:
-      app: haystack-rag
+      app: {{ include "charts.fullname" . }}
       app.kubernetes.io/component: query
   policyTypes:
   - Ingress
@@ -80,22 +80,22 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          app: haystack-rag
+          app: {{ include "charts.fullname" . }}
           app.kubernetes.io/component: api-gw
     ports:
     - protocol: TCP
-      port: {{ .Values.ingress.ports.query }}
+      port: {{ .Values.backendIngress.ports.query }}
 ---
 # 4. Ingress Policy for Backend Indexing
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: np-haystack-rag-indexing-ingress
+  name: np-{{ include "charts.fullname" . }}-indexing-ingress
   namespace: {{ .Release.Namespace }}
 spec:
   podSelector:
     matchLabels:
-      app: haystack-rag
+      app: {{ include "charts.fullname" . }}
       app.kubernetes.io/component: indexing
   policyTypes:
   - Ingress
@@ -103,22 +103,22 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          app: haystack-rag
+          app: {{ include "charts.fullname" . }}
           app.kubernetes.io/component: api-gw
     ports:
     - protocol: TCP
-      port: {{ .Values.ingress.ports.indexing }}
+      port: {{ .Values.backendIngress.ports.indexing }}
 ---
 # 5. Ingress Policy for OpenSearch
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: np-haystack-rag-opensearch-ingress
+  name: np-{{ include "charts.fullname" . }}-opensearch-ingress
   namespace: {{ .Release.Namespace }}
 spec:
   podSelector:
     matchLabels:
-      app: haystack-rag
+      app: {{ include "charts.fullname" . }}
       app.kubernetes.io/component: opensearch
   policyTypes:
   - Ingress
@@ -126,11 +126,11 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          app: haystack-rag
+          app: {{ include "charts.fullname" . }}
           app.kubernetes.io/component: indexing
     - podSelector:
         matchLabels:
-          app: haystack-rag
+          app: {{ include "charts.fullname" . }}
           app.kubernetes.io/component: query
     ports:
     - protocol: TCP
@@ -138,20 +138,20 @@ spec:
     - protocol: TCP
       port: {{ (index .Values.opensearch.ports 1).port }}
 ---
-# 6. Egress Policy for All haystack‑rag Pods (except Traefik)
+# 6. Egress Policy for All {{ include "charts.fullname" . }} Pods (except Traefik)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: np-haystack-rag-egress
+  name: np-{{ include "charts.fullname" . }}-egress
   namespace: {{ .Release.Namespace }}
 spec:
   podSelector:
     matchLabels:
-      app: haystack-rag
+      app: {{ include "charts.fullname" . }}
   policyTypes:
   - Egress
   egress:
-  # Allow DNS resolution using the services CIDR (10.100.0.0/16)
+  # Allow DNS resolution using the services CIDR
   - to:
     - ipBlock:
         cidr: 10.100.0.0/16
@@ -173,11 +173,11 @@ spec:
       port: 53
     - protocol: TCP
       port: 53
-  # Allow internal communication among haystack-rag pods
+  # Allow internal communication among pods
   - to:
     - podSelector:
         matchLabels:
-          app: haystack-rag
+          app: {{ include "charts.fullname" . }}
   # Allow outbound API server traffic (e.g. for certificate retrieval)
   - to:
     - ipBlock:
@@ -190,23 +190,23 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: np-traefik-egress-unrestricted
+  name: np-{{ include "charts.fullname" . }}-traefik-egress
   namespace: {{ .Release.Namespace }}
 spec:
   podSelector:
     matchLabels:
-      app: haystack-rag
+      app: {{ include "charts.fullname" . }}
       app.kubernetes.io/component: api-gw
   policyTypes:
   - Egress
   egress:
   - {}
 ---
-# 8. Egress Policy for backend – Unrestricted
+# 8. Egress Policy for Backend – Unrestricted
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: np-backend-egress-unrestricted
+  name: np-{{ include "charts.fullname" . }}-backend-egress
   namespace: {{ .Release.Namespace }}
 spec:
   podSelector:
@@ -220,4 +220,3 @@ spec:
   - Egress
   egress:
   - {}
-

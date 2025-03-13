@@ -9,7 +9,7 @@ spec:
   secretName: rag-local-tls
   commonName: rag.local
   dnsNames:
-    - rag.local
+    - "rag.local"
   issuerRef:
     name: selfsigned-cluster-issuer
     kind: ClusterIssuer

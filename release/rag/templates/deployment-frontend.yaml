@@ -1,35 +1,5 @@
 ---
 # Source: rag/templates/deployment-frontend.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: haystack-rag-frontend-config
-  labels:
-    app.kubernetes.io/component: frontend
-    app.kubernetes.io/group: frontend
-    helm.sh/chart: rag-0.1.0
-    app.kubernetes.io/name: rag
-    app.kubernetes.io/instance: haystack
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-data:
-  nginx.conf:  |-
-   server {
-       listen 3000 default_server;
-       server_name _;
-       client_max_body_size 100M;
-       location / {
-           root   /usr/share/nginx/html;
-           index  index.html index.htm;
-           try_files $uri $uri/ /index.html;
-       }
-       error_page   500 502 503 504  /50x.html;
-       location = /50x.html {
-           root   /usr/share/nginx/html;
-       }
-   }
----
-# Source: rag/templates/deployment-frontend.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:

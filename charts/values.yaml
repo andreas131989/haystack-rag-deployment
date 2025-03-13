@@ -5,7 +5,6 @@ apiGw:
     port: 8080
     targetPort: 8080
   - name: traefik
-    nodePort: 32091
     port: 8081
     targetPort: 8081
   - name: websecure
@@ -126,6 +125,12 @@ gatewayApiGwConfig:
     entryPoints:
       web:
         address: ":8080"
+        http:
+          redirections:
+            entryPoint:
+              to: websecure
+              scheme: https
+              permanent: true
       websecure:
         address: ":443"
         tls: {}  # Enables TLS on websecure
@@ -146,7 +151,7 @@ gatewayApiGwConfig:
       kubernetesIngress:
         namespaces:
           - {{ .Release.Namespace }}
-ingress:
+backendIngress:
   host: rag.local
   tlsSecret: rag-local-tls
   paths:
@@ -219,3 +224,16 @@ secrets:
   openaiApiKey: "{{ .Values.secrets.openaiApiKey }}"
   opensearchPassword: "{{ .Values.secrets.opensearchPassword }}"
   opensearchUser: "{{ .Values.secrets.opensearchUser }}"
+certificate:
+  name: rag-local-tls
+  secretName: rag-local-tls
+  commonName: rag.local
+  dnsNames:
+    - rag.local
+  issuer:
+    name: selfsigned-cluster-issuer
+    kind: ClusterIssuer
+clusterRole:
+  name: "traefik-ingress-clusterrole"
+  bindingName: "traefik-ingress-clusterrolebinding"
+  serviceAccount: "default"

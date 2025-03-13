@@ -11,23 +11,23 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - {{ .Values.ingress.host | default "rag.local" }}
-      secretName: {{ .Values.ingress.tlsSecret | default "rag-local-tls" }}
+        - {{ .Values.backendIngress.host | default "rag.local" }}
+      secretName: {{ .Values.backendIngress.tlsSecret | default "rag-local-tls" }}
   rules:
-    - host: {{ .Values.ingress.host | default "rag.local" }}
+    - host: {{ .Values.backendIngress.host | default "rag.local" }}
       http:
         paths:
-          - path: {{ .Values.ingress.paths.search | default "/api/search" }}
+          - path: {{ .Values.backendIngress.paths.search | default "/api/search" }}
             pathType: Prefix
             backend:
               service:
-                name: {{ .Values.ingress.services.query | default "haystack-rag-query" }}
+                name: {{ .Values.backendIngress.services.query | default "haystack-rag-query" }}
                 port:
-                  number: {{ .Values.ingress.ports.query | default 8002 }}
-          - path: {{ .Values.ingress.paths.indexing | default "/api/files" }}
+                  number: {{ .Values.backendIngress.ports.query | default 8002 }}
+          - path: {{ .Values.backendIngress.paths.indexing | default "/api/files" }}
             pathType: Prefix
             backend:
               service:
-                name: {{ .Values.ingress.services.indexing | default "haystack-rag-indexing" }}
+                name: {{ .Values.backendIngress.services.indexing | default "haystack-rag-indexing" }}
                 port:
-                  number: {{ .Values.ingress.ports.indexing | default 8001 }}
+                  number: {{ .Values.backendIngress.ports.indexing | default 8001 }}

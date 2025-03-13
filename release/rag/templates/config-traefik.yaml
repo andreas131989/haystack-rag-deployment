@@ -1,0 +1,46 @@
+---
+# Source: rag/templates/config-traefik.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: haystack-rag-gateway-api-gw-config
+  labels:
+    app.kubernetes.io/component: api-gw
+    app.kubernetes.io/group: gateway
+    app: haystack-rag
+    helm.sh/chart: rag-0.1.0
+    app.kubernetes.io/name: rag
+    app.kubernetes.io/instance: haystack
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+data:
+  traefik.yml: |-
+    entryPoints:
+      web:
+        address: ":8080"
+        http:
+          redirections:
+            entryPoint:
+              to: websecure
+              scheme: https
+              permanent: true
+      websecure:
+        address: ":443"
+        tls: {}  # Enables TLS on websecure
+      traefik:
+        address: ":8081"
+    
+    tls:
+      stores:
+        default:
+          defaultCertificate:
+            certFile: "/certs/tls.crt"
+            keyFile: "/certs/tls.key"
+    
+    log:
+      level: DEBUG
+    
+    providers:
+      kubernetesIngress:
+        namespaces:
+          - default

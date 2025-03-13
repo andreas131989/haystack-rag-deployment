@@ -1,0 +1,29 @@
+---
+# Source: rag/templates/service-opensearch.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: haystack-rag-opensearch
+  labels:
+    app.kubernetes.io/component: opensearch
+    app.kubernetes.io/group: search
+    app.kubernetes.io/instance: haystack
+    app: haystack-rag
+    helm.sh/chart: rag-0.1.0
+    app.kubernetes.io/name: rag
+    app.kubernetes.io/instance: haystack
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  selector:
+    app: haystack-rag
+    app.kubernetes.io/component: opensearch
+    app.kubernetes.io/group: search
+  ports:
+  - name: rest-api
+    port: 9200
+    targetPort: 9200
+  - name: performance
+    port: 9600
+    targetPort: 9600

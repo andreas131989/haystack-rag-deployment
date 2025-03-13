@@ -7,21 +7,11 @@ This repository provides a **Kubernetes-based**, **cloud-agnostic**, **on-premis
 ## Table of Contents
 
 - [Overview](#overview)
-- [Assumptions](#assumptions)
-- [Pre-installation Requirements](#pre-installation-requirements)
+- [Assumptions and decisions](#assumptions-and-decisions)
+- [Prerequisites](#prerequisites)
 - [Deployment Steps](#deployment-steps)
-  - [Adjust Hosts File](#adjust-hosts-file)
-  - [Build Source Images](#build-source-images)
-  - [Build Docker Image](#build-docker-image)
-  - [Run the Deployment Container](#run-the-deployment-container)
-  - [Access the Application](#access-the-application)
-- [Deployment Steps For Kubernetes](#deployment-steps-for-kubernetes)
 - [Verification Steps](#verification-steps)
 - [Additional Considerations](#additional-considerations)
-  - [Airgapped Deployment](#airgapped-deployment)
-  - [Integration with Alternative Password Stores](#integration-with-alternative-password-stores)
-  - [Monitoring and Logging Integration](#monitoring-and-logging-integration)
-- [Conclusion](#conclusion)
 
 ---
 
@@ -29,13 +19,19 @@ This repository provides a **Kubernetes-based**, **cloud-agnostic**, **on-premis
 
 This deployment solution packages the Haystack RAG application into a production-grade Kubernetes environment. It leverages Kubernetes to deploy components (Frontend, Backend, OpenSearch, etc.) as workloads (Deployments, Services, ConfigMaps, Secrets, and Ingress). A Helm chart packages Kubernetes manifests with configurable `values.yaml`. Networking and ingress are configured via **Traefik** to expose frontend and API endpoints accessible via a custom hostname (`rag.local`). Note that the chosen kubernetes distribution (k3s) has built-in a traefik ingress class. If you deploy in another distribution, you would need to ensure it exists.
 
+Next to the helm chart, there are deployable release kubernetes manifests in the `release` directory templated from the helm charts. 
+
+Finally, the `kubernetes-static-routing` folder contains the initial deployment manifests which were used to generate the helm charts. Note that certificates, rbac, ingress and network policies were not used in that minimal setup as the goal was to get the stack up and running.
+
 ---
 
 ## Assumptions and decisions
 - In a production environment, we would use a load balancer to expose traefik to the outside. Since this is supposed to run locally, we are using nodePort services, which is deemed ok for the purpose of this exercise. 
-- The helm release is the one being automatically deployed on k3s.
+- The helm release is the one being automatically deployed on k3s. There is a second script (`deploy_k8s.sh`) which can be used once the cluster is setup to deploy the release scripts.
 - It was chosen to containerize the whole exercise to ensure minimal dependencies with host systems.
 - K3s was chosen as a production grade but still minimal kubernetes distro.
+- Self signed certificates are used for TLS via cert-manager.
+- Network policies and rbac ensure a production like environment in k3s.
 
 ---
 
@@ -99,19 +95,10 @@ docker run -it \
 Open your browser at:
 
 ```
-http://rag.local:32090/ 
+https://rag.local:32090/
 ```
 
 You will be able to upload a document and use the query functionality. 
-
->**IMPORTANT:** You will need to add a valid openAI key in values.yaml:
-```bash
-openaiApiKey: "ssj-test-project"
-```
-
-## Deployment Steps For Kubernetes
-To deploy the kubernetes manifests, you can execute the `scripts/deploy_k8s.sh` script from inside the container. Note that it assumes there is a cluster already deployed and running.
-
 
 ## Verification Steps
 
@@ -124,13 +111,15 @@ docker ps
 - **Access frontend in browser:**
 
 ```bash
-http://rag.local:32090/
+https://rag.local:32090/
 ```
 
 - **Test Traefik Gateway health endpoint:**
 
+In order to test the health endpoint of Traefik, you can port forward the corresponding port and perform a curl command.
+
 ```bash
-curl http://rag.local:32091/ping
+kubectl port-forward svc/haystack-rag-api-gw 8081:8081 -n <namespace_name> & PF_PID=$!; sleep 1; curl http://localhost:8081/ping; kill $PF_PID
 ```
 
 *Expect a 'OK' response.*

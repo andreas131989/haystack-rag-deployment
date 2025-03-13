@@ -1,4 +1,3 @@
-CLUSTER = haystack-cluster
 BACKEND_IMAGE_INDEXING = backend-indexing:local
 BACKEND_IMAGE_QUERY = backend-query:local
 FRONTEND_IMAGE = frontend:local

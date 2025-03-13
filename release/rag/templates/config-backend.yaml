@@ -1,5 +1,5 @@
 ---
-# Source: rag/templates/config.yaml
+# Source: rag/templates/config-backend.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:

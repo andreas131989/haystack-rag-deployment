@@ -1,13 +1,15 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: rag-local-tls
+  name: {{ default "rag-local-tls" .Values.certificate.name }}
   namespace: {{ .Release.Namespace }}
 spec:
-  secretName: rag-local-tls
-  commonName: rag.local
+  secretName: {{ default "rag-local-tls" .Values.certificate.secretName }}
+  commonName: {{ default "rag.local" .Values.certificate.commonName }}
   dnsNames:
-    - rag.local
+    {{- range .Values.certificate.dnsNames }}
+    - {{ . | quote }}
+    {{- end }}
   issuerRef:
-    name: selfsigned-cluster-issuer
-    kind: ClusterIssuer
+    name: {{ default "selfsigned-cluster-issuer" .Values.certificate.issuer.name }}
+    kind: {{ default "ClusterIssuer" .Values.certificate.issuer.kind }}

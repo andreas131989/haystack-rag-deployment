@@ -1,2 +1,6 @@
 kubeconfig*
 dev*
+src/
+docs/
+prerequisites*
+Makefile

@@ -146,7 +146,7 @@ spec:
       port: 9600
 ---
 # Source: rag/templates/network-policies.yaml
-# 6. Egress Policy for All haystack‑rag Pods (except Traefik)
+# 6. Egress Policy for All haystack-rag Pods (except Traefik)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -159,7 +159,7 @@ spec:
   policyTypes:
   - Egress
   egress:
-  # Allow DNS resolution using the services CIDR (10.100.0.0/16)
+  # Allow DNS resolution using the services CIDR
   - to:
     - ipBlock:
         cidr: 10.100.0.0/16
@@ -181,7 +181,7 @@ spec:
       port: 53
     - protocol: TCP
       port: 53
-  # Allow internal communication among haystack-rag pods
+  # Allow internal communication among pods
   - to:
     - podSelector:
         matchLabels:
@@ -199,7 +199,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: np-traefik-egress-unrestricted
+  name: np-haystack-rag-traefik-egress
   namespace: default
 spec:
   podSelector:
@@ -212,11 +212,11 @@ spec:
   - {}
 ---
 # Source: rag/templates/network-policies.yaml
-# 8. Egress Policy for backend – Unrestricted
+# 8. Egress Policy for Backend – Unrestricted
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: np-backend-egress-unrestricted
+  name: np-haystack-rag-backend-egress
   namespace: default
 spec:
   podSelector:

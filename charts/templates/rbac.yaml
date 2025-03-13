@@ -37,7 +37,7 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: traefik-ingress-clusterrole
+  name: {{ .Values.clusterRole.name | default "traefik-ingress-clusterrole" }}
 rules:
 - apiGroups: [""]
   resources: ["pods", "services", "endpoints", "secrets"]
@@ -58,12 +58,12 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: traefik-ingress-clusterrolebinding
+  name: {{ .Values.clusterRole.bindingName | default "traefik-ingress-clusterrolebinding" }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: traefik-ingress-clusterrole
+  name: {{ .Values.clusterRole.name | default "traefik-ingress-clusterrole" }}
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: {{ .Values.clusterRole.serviceAccount | default "default" }}
   namespace: {{ .Release.Namespace }}
